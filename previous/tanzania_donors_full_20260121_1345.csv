@@ -1,0 +1,24 @@
+donor,type,url,sectors,typical_range,activity_score,has_open_call,has_deadline,deadlines_found,amounts_mentioned,notes,checked
+Swiss Agency for Development (SDC) Tanzania,Bilateral Donors,https://www.eda.admin.ch/countries/tanzania/en/home/international-cooperation.html,"health, education, governance",CHF 50K - CHF 1M,1,False,False,,,Focus on Southern Highlands,2026-01-21 13:42
+Canada (Global Affairs) Tanzania,Bilateral Donors,https://www.international.gc.ca/world-monde/funding-financement/index.aspx,"education, health, gender",CAD 25K - CAD 1M,1,False,False,2025-02-03,,Strong education focus,2026-01-21 13:42
+Benevity,Crowdfunding Platforms,https://causes.benevity.org/,various,$500 - $10K,1,False,False,,"$18b, $16b",Corporate giving platform,2026-01-21 13:45
+Comic Relief,Foundations,https://www.comicrelief.com/funding,"health, education, livelihoods",£10K - £500K,1,False,False,,,"Rolling applications, UK-based",2026-01-21 13:44
+UK FCDO Tanzania,Bilateral Donors,https://www.ukaiddirect.org/,"education, health, governance",£10K - £1M,0,False,False,,,UK Aid Direct specifically for small organizations,2026-01-21 13:42
+Irish Aid Tanzania,Bilateral Donors,https://www.irishaid.ie/what-we-do/countries-where-we-work/our-partner-countries/tanzania/,"health, education, governance",€20K - €500K,0,False,False,,,Strong focus on health and education,2026-01-21 13:42
+USAID Tanzania,Bilateral Donors,https://www.usaid.gov/tanzania/work-with-us,"health, education, governance",$50K - $5M,0,False,False,,,"Major funder in Tanzania, regular RFPs",2026-01-21 13:42
+EU Tanzania,Multilateral Donors,https://webgate.ec.europa.eu/europeaid/online-services/,"education, health, governance",€50K - €5M,0,False,False,,,Check PADOR registration requirement,2026-01-21 13:42
+Global Fund Tanzania,Multilateral Donors,https://www.theglobalfund.org/en/funding-model/,"health, HIV/AIDS, TB, malaria",$500K - $10M+,0,False,False,Error checking,,"Large health programs, often through CCM",2026-01-21 13:42
+World Bank Tanzania,Multilateral Donors,https://projects.worldbank.org/en/projects-operations/projects-list?countrycode_exact=TZ,"education, health, infrastructure",$100K - $50M+,0,False,False,,,"Large projects, often government partnerships",2026-01-21 13:42
+African Development Bank,Multilateral Donors,https://www.afdb.org/en/projects-and-operations,"education, health, infrastructure",$200K - $10M+,0,False,False,,,Infrastructure and systems strengthening,2026-01-21 13:42
+UNDP Tanzania,Un Agencies,https://www.undp.org/tanzania/procurement-notices,"governance, livelihoods, health",$25K - $1M,0,False,False,,,Check procurement notices regularly,2026-01-21 13:43
+UNESCO Tanzania,Un Agencies,https://en.unesco.org/funding,"education, culture, science",$20K - $500K,0,False,False,,,Education quality and access,2026-01-21 13:43
+UNICEF Tanzania,Un Agencies,https://www.unicef.org/tanzania/opportunities,"education, health, child protection",$30K - $500K,0,False,False,,,Strong focus on children and youth,2026-01-21 13:43
+WHO Tanzania,Un Agencies,https://www.who.int/about/careers,"health, disease prevention",$50K - $1M,0,False,False,,,Health systems and disease control,2026-01-21 13:43
+Bill & Melinda Gates Foundation,Foundations,https://www.gatesfoundation.org/about/how-we-work/general-information/grant-opportunities,"health, education, agriculture",$100K - $10M+,0,False,False,,,"Invitation only, but tracks innovations",2026-01-21 13:43
+UNFPA Tanzania,Un Agencies,https://tanzania.unfpa.org/en/opportunities,"health, reproductive health, youth",$30K - $500K,0,False,False,,,"Maternal health, family planning",2026-01-21 13:43
+Mastercard Foundation,Foundations,https://mastercardfdn.org/partnerships/,"education, youth employment",$500K - $50M,0,False,False,,,Large education programs in East Africa,2026-01-21 13:44
+Aga Khan Foundation,Foundations,https://www.akdn.org/akf-east-africa,"education, health, early childhood",$50K - $2M,0,False,False,,,"Active in Tanzania, especially Coast region",2026-01-21 13:43
+Open Society Foundations,Foundations,https://www.opensocietyfoundations.org/grants,"education, health, rights",$25K - $500K,0,False,False,Error checking,,Equity and access focus,2026-01-21 13:44
+Conrad N. Hilton Foundation,Foundations,https://www.hiltonfoundation.org/grants,"health, safe water",$100K - $2M,0,False,False,,"$37,248,500, $10,408,000",Invitation only but track their work,2026-01-21 13:44
+GlobalGiving,Crowdfunding Platforms,https://www.globalgiving.org/fundraise/,various,$5K - $50K,0,False,False,Error checking,,Must qualify and get verified,2026-01-21 13:44
+Chuffed,Crowdfunding Platforms,https://chuffed.org/start-fundraising,various,$1K - $30K,0,False,False,,,Social enterprise friendly,2026-01-21 13:44

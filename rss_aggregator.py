@@ -1,0 +1,365 @@
+import feedparser
+import pandas as pd
+from datetime import datetime, timedelta
+import re
+import time
+import json
+import os
+
+class DonorRSSAggregator:
+    """
+    RSS Feed aggregator for donor opportunities
+    Monitors multiple donor RSS feeds and filters for relevant opportunities
+    """
+    
+    def __init__(self, country="Tanzania", sectors=None):
+        self.country = country.lower()
+        self.sectors = [s.lower() for s in (sectors or ["education", "health"])]
+        self.opportunities = []
+        self.seen_urls = self.load_seen_urls()
+    
+    def load_seen_urls(self):
+        """Load previously seen URLs to avoid duplicates"""
+        try:
+            if os.path.exists('seen_opportunities.json'):
+                with open('seen_opportunities.json', 'r') as f:
+                    return set(json.load(f))
+        except:
+            pass
+        return set()
+    
+    def save_seen_urls(self):
+        """Save seen URLs for next run"""
+        try:
+            with open('seen_opportunities.json', 'w') as f:
+                json.dump(list(self.seen_urls), f)
+        except Exception as e:
+            print(f"Warning: Could not save seen URLs: {e}")
+    
+    def get_donor_feeds(self):
+        """
+        Curated list of RSS feeds from major donors
+        These are more reliable than web scraping!
+        """
+        return {
+            'ReliefWeb - Tanzania': {
+                'url': 'https://reliefweb.int/updates?advanced-search=%28PC236%29_%28C47%29&format=rss',
+                'type': 'aggregator',
+                'keywords': ['tanzania', 'east africa']
+            },
+            'ReliefWeb - Jobs Tanzania': {
+                'url': 'https://reliefweb.int/jobs?search=tanzania&format=rss',
+                'type': 'aggregator',
+                'keywords': ['tanzania']
+            },
+            'Devex - Funding': {
+                'url': 'https://www.devex.com/news/funding/rss',
+                'type': 'aggregator',
+                'keywords': ['tanzania', 'east africa', 'africa']
+            },
+            'USAID - Opportunities': {
+                'url': 'https://www.usaid.gov/rss/business.xml',
+                'type': 'bilateral',
+                'keywords': ['tanzania', 'east africa', 'africa']
+            },
+            'GlobalGiving - Projects': {
+                'url': 'https://www.globalgiving.org/aboutus/media/rss/',
+                'type': 'platform',
+                'keywords': ['tanzania', 'africa']
+            },
+            'UN OCHA - East Africa': {
+                'url': 'https://www.unocha.org/rss/east-and-central-africa.xml',
+                'type': 'UN',
+                'keywords': ['tanzania', 'east africa']
+            },
+            'World Bank - Tanzania': {
+                'url': 'https://www.worldbank.org/en/country/tanzania/rss',
+                'type': 'multilateral',
+                'keywords': ['tanzania']
+            },
+            'UNICEF - Press Releases': {
+                'url': 'https://www.unicef.org/press-releases/rss.xml',
+                'type': 'UN',
+                'keywords': ['tanzania', 'east africa']
+            },
+            'Grants.gov - Recent Postings': {
+                'url': 'https://www.grants.gov/rss/GG_NewOppByAgency.xml',
+                'type': 'US Federal',
+                'keywords': ['international', 'africa', 'global']
+            },
+            'FundsForNGOs - Recent': {
+                'url': 'https://www2.fundsforngos.org/feed/',
+                'type': 'aggregator',
+                'keywords': ['tanzania', 'east africa', 'africa']
+            }
+        }
+    
+    def parse_feed(self, feed_name, feed_info):
+        """Parse a single RSS feed"""
+        print(f"  📡 Checking: {feed_name}...")
+        
+        try:
+            feed = feedparser.parse(feed_info['url'])
+            
+            if feed.bozo:  # Feed parsing error
+                print(f"    ⚠️ Feed error: {feed_name}")
+                return 0
+            
+            count = 0
+            for entry in feed.entries[:20]:  # Check last 20 items
+                # Skip if already seen
+                entry_url = entry.get('link', '')
+                if entry_url in self.seen_urls:
+                    continue
+                
+                # Get entry details
+                title = entry.get('title', '')
+                description = entry.get('summary', entry.get('description', ''))
+                published = entry.get('published', entry.get('updated', ''))
+                
+                # Combine text for relevance check
+                full_text = f"{title} {description}".lower()
+                
+                # Check geographic relevance
+                geo_relevant = any(kw in full_text for kw in feed_info['keywords'])
+                
+                # Check sector relevance
+                sector_relevant = any(sector in full_text for sector in self.sectors)
+                
+                # Also check for general funding keywords
+                funding_keywords = ['grant', 'funding', 'opportunity', 'proposal', 'rfp', 
+                                   'call', 'application', 'tender', 'competition']
+                has_funding_keyword = any(kw in full_text for kw in funding_keywords)
+                
+                # Only include if relevant
+                if (geo_relevant or sector_relevant) and has_funding_keyword:
+                    self.opportunities.append({
+                        'source': feed_name,
+                        'source_type': feed_info['type'],
+                        'title': title,
+                        'description': description[:500],
+                        'url': entry_url,
+                        'published': published,
+                        'deadline': self.extract_deadline(full_text),
+                        'amount': self.extract_amount(full_text),
+                        'sectors': self.classify_sectors(full_text),
+                        'relevance_score': self.calculate_relevance(full_text),
+                        'discovered': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                        'is_new': True
+                    })
+                    
+                    self.seen_urls.add(entry_url)
+                    count += 1
+            
+            print(f"    ✅ Found {count} relevant opportunities")
+            return count
+            
+        except Exception as e:
+            print(f"    ⚠️ Error parsing {feed_name}: {str(e)[:60]}")
+            return 0
+    
+    def calculate_relevance(self, text):
+        """Score relevance 0-10"""
+        score = 0
+        
+        # Geography points
+        if self.country in text:
+            score += 4
+        elif 'east africa' in text:
+            score += 3
+        elif 'africa' in text:
+            score += 1
+        
+        # Sector points
+        for sector in self.sectors:
+            if sector in text:
+                score += 2
+        
+        # Urgency points
+        if any(word in text for word in ['deadline', 'closing', 'urgent', 'apply now']):
+            score += 1
+        
+        return min(score, 10)  # Cap at 10
+    
+    def extract_deadline(self, text):
+        """Extract deadline from text"""
+        patterns = [
+            r'deadline[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})',
+            r'due[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})',
+            r'closes?[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})',
+            r'((?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4})',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        return None
+    
+    def extract_amount(self, text):
+        """Extract funding amount"""
+        patterns = [
+            r'\$\s?\d+(?:,\d{3})*(?:\s?(?:million|thousand|[KMB]))?',
+            r'(?:USD|EUR|GBP)\s?\d+(?:,\d{3})*(?:\s?(?:million|thousand|[KMB]))?',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return match.group(0)
+        
+        return None
+    
+    def classify_sectors(self, text):
+        """Classify sectors"""
+        sectors = []
+        
+        sector_keywords = {
+            'education': ['education', 'school', 'learning', 'training', 'literacy'],
+            'health': ['health', 'medical', 'hospital', 'clinic', 'healthcare', 'nutrition'],
+            'water': ['water', 'sanitation', 'wash'],
+            'agriculture': ['agriculture', 'farming', 'food'],
+            'governance': ['governance', 'democracy', 'rights', 'justice'],
+        }
+        
+        for sector, keywords in sector_keywords.items():
+            if any(kw in text for kw in keywords):
+                sectors.append(sector)
+        
+        return sectors if sectors else ['general']
+    
+    def scan_all_feeds(self):
+        """Scan all RSS feeds"""
+        print("="*70)
+        print("📡 RSS DONOR FEED AGGREGATOR")
+        print(f"🎯 Focus: {self.country.title()} + {', '.join(self.sectors).title()}")
+        print("="*70)
+        
+        feeds = self.get_donor_feeds()
+        
+        print(f"\n📊 Scanning {len(feeds)} RSS feeds...\n")
+        
+        total_found = 0
+        for feed_name, feed_info in feeds.items():
+            found = self.parse_feed(feed_name, feed_info)
+            total_found += found
+            time.sleep(1)  # Be respectful to servers
+        
+        print("\n" + "="*70)
+        print(f"✅ Scan complete! Found {total_found} NEW relevant opportunities")
+        print("="*70)
+        
+        # Save seen URLs for next time
+        self.save_seen_urls()
+        
+        if len(self.opportunities) == 0:
+            print("\n💡 No new opportunities found this time.")
+            print("   This is normal - RSS feeds update periodically.")
+            print("   Run this daily to catch new opportunities as they appear!")
+            return pd.DataFrame()
+        
+        df = pd.DataFrame(self.opportunities)
+        
+        # Sort by relevance score
+        df = df.sort_values('relevance_score', ascending=False)
+        
+        return df
+    
+    def generate_report(self, df):
+        """Generate summary report"""
+        if len(df) == 0:
+            return
+        
+        print("\n📊 OPPORTUNITY SUMMARY:")
+        print("-" * 70)
+        
+        print(f"\n✅ Total new opportunities: {len(df)}")
+        print(f"🔥 High relevance (8-10): {len(df[df['relevance_score'] >= 8])}")
+        print(f"⚡ Medium relevance (5-7): {len(df[(df['relevance_score'] >= 5) & (df['relevance_score'] < 8)])}")
+        
+        print("\n📌 By Source Type:")
+        print(df['source_type'].value_counts().to_string())
+        
+        print("\n🎯 By Sector:")
+        all_sectors = []
+        for sectors in df['sectors']:
+            if isinstance(sectors, list):
+                all_sectors.extend(sectors)
+        if all_sectors:
+            print(pd.Series(all_sectors).value_counts().head(5).to_string())
+        
+        print("\n🏆 TOP 5 MOST RELEVANT OPPORTUNITIES:")
+        print("-" * 70)
+        
+        for i, (_, row) in enumerate(df.head(5).iterrows(), 1):
+            print(f"\n{i}. {row['title']}")
+            print(f"   Source: {row['source']}")
+            print(f"   Relevance: {row['relevance_score']}/10")
+            print(f"   Sectors: {', '.join(row['sectors']) if isinstance(row['sectors'], list) else row['sectors']}")
+            if row['deadline']:
+                print(f"   ⏰ Deadline: {row['deadline']}")
+            if row['amount']:
+                print(f"   💰 Amount: {row['amount']}")
+            print(f"   🔗 {row['url']}")
+        
+        # Show deadlines
+        with_deadlines = df[df['deadline'].notna()]
+        if len(with_deadlines) > 0:
+            print(f"\n\n🚨 URGENT - {len(with_deadlines)} opportunities with deadlines:")
+            print("-" * 70)
+            for _, row in with_deadlines.iterrows():
+                print(f"• {row['title'][:60]}")
+                print(f"  Deadline: {row['deadline']} | {row['url']}\n")
+
+
+# RUN THE RSS AGGREGATOR
+if __name__ == "__main__":
+    aggregator = DonorRSSAggregator(
+        country="Tanzania",
+        sectors=["education", "health"]
+    )
+    
+    print("\n🚀 Starting RSS feed scan...")
+    print("⏱️  This will take 1-2 minutes...\n")
+    
+    results = aggregator.scan_all_feeds()
+    
+    if len(results) > 0:
+        aggregator.generate_report(results)
+        
+        # Save results
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+        filename = f"rss_opportunities_{timestamp}.csv"
+        results.to_csv(filename, index=False)
+        print(f"\n💾 Full results saved to: {filename}")
+        
+        # Save high-priority ones
+        priority = results[results['relevance_score'] >= 7]
+        if len(priority) > 0:
+            priority_file = f"PRIORITY_opportunities_{timestamp}.csv"
+            priority.to_csv(priority_file, index=False)
+            print(f"⭐ High-priority opportunities: {priority_file}")
+        
+        # Save urgent ones
+        urgent = results[results['deadline'].notna()]
+        if len(urgent) > 0:
+            urgent_file = f"URGENT_deadlines_{timestamp}.csv"
+            urgent.to_csv(urgent_file, index=False)
+            print(f"🚨 Urgent opportunities: {urgent_file}")
+    
+    print("\n" + "="*70)
+    print("✅ RSS SCAN COMPLETE")
+    print("="*70)
+    
+    print("\n💡 NEXT STEPS:")
+    print("1. Review the generated CSV files")
+    print("2. Set this to run daily (see automation guide below)")
+    print("3. Add more RSS feeds as you discover them")
+    
+    print("\n📅 TO AUTOMATE (Run Daily):")
+    print("   Linux/Mac: Add to crontab")
+    print("   crontab -e")
+    print("   0 9 * * * cd /path/to/project && python rss_aggregator.py")
+    print("\n   Windows: Use Task Scheduler")
+    print("   Or deploy to a free server (Heroku, Railway, etc.)")
