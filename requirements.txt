@@ -3,3 +3,8 @@ pandas
 python-dotenv
 streamlit
 plotly
+requests
+datetime
+time
+beautifulsoup4
+lxml
