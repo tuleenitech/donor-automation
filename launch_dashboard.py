@@ -36,14 +36,14 @@ def main():
 ╚══════════════════════════════════════════════════════════════════════╝
     """)
     
-    # Check dependencies
+ 
     print("🔍 Checking dependencies...")
     if not check_dependencies():
         sys.exit(1)
     
     print("✅ All dependencies installed\n")
     
-    # Check if dashboard file exists
+
     if not os.path.exists('dashboard.py'):
         print("⚠️  dashboard.py not found in current directory")
         print("💡 Make sure you've saved the dashboard code as 'dashboard.py'")
