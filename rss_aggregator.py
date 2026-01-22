@@ -12,11 +12,12 @@ class DonorRSSAggregator:
     Monitors multiple donor RSS feeds and filters for relevant opportunities
     """
     
-    def __init__(self, country="Tanzania", sectors=None):
+    def __init__(self, country="Tanzania", sectors=None, show_all=False):
         self.country = country.lower()
         self.sectors = [s.lower() for s in (sectors or ["education", "health"])]
         self.opportunities = []
-        self.seen_urls = self.load_seen_urls()
+        self.show_all = show_all  # If True, show everything even if seen before
+        self.seen_urls = self.load_seen_urls() if not show_all else set()
     
     def load_seen_urls(self):
         """Load previously seen URLs to avoid duplicates"""
@@ -38,59 +39,123 @@ class DonorRSSAggregator:
     
     def get_donor_feeds(self):
         """
-        Curated list of RSS feeds from major donors
-        These are more reliable than web scraping!
+        EXPANDED list of RSS feeds - more sources = more opportunities!
         """
         return {
-            'ReliefWeb - Tanzania': {
-                'url': 'https://reliefweb.int/updates?advanced-search=%28PC236%29_%28C47%29&format=rss',
+            # === MAJOR AGGREGATORS (Best sources!) ===
+            'FundsForNGOs - All': {
+                'url': 'https://www2.fundsforngos.org/feed/',
                 'type': 'aggregator',
-                'keywords': ['tanzania', 'east africa']
+                'keywords': ['tanzania', 'east africa', 'africa', 'international']
             },
-            'ReliefWeb - Jobs Tanzania': {
-                'url': 'https://reliefweb.int/jobs?search=tanzania&format=rss',
-                'type': 'aggregator',
-                'keywords': ['tanzania']
-            },
-            'Devex - Funding': {
+            'Devex - Funding News': {
                 'url': 'https://www.devex.com/news/funding/rss',
                 'type': 'aggregator',
                 'keywords': ['tanzania', 'east africa', 'africa']
             },
-            'USAID - Opportunities': {
+            'ReliefWeb - Tanzania Updates': {
+                'url': 'https://reliefweb.int/updates?advanced-search=%28PC236%29&format=rss',
+                'type': 'aggregator',
+                'keywords': ['tanzania']
+            },
+            'ReliefWeb - Jobs East Africa': {
+                'url': 'https://reliefweb.int/jobs?search=east+africa&format=rss',
+                'type': 'aggregator',
+                'keywords': ['tanzania', 'east africa']
+            },
+            'Humentum (formerly LINGOs)': {
+                'url': 'https://www.humentum.org/feed',
+                'type': 'aggregator',
+                'keywords': ['africa', 'grant', 'funding']
+            },
+            
+            # === BILATERAL DONORS ===
+            'USAID - Business Opportunities': {
                 'url': 'https://www.usaid.gov/rss/business.xml',
                 'type': 'bilateral',
-                'keywords': ['tanzania', 'east africa', 'africa']
+                'keywords': ['tanzania', 'east africa', 'africa', 'international']
             },
-            'GlobalGiving - Projects': {
-                'url': 'https://www.globalgiving.org/aboutus/media/rss/',
-                'type': 'platform',
+            'UK FCDO - News': {
+                'url': 'https://www.gov.uk/government/organisations/foreign-commonwealth-development-office.atom',
+                'type': 'bilateral',
+                'keywords': ['tanzania', 'africa', 'aid', 'development']
+            },
+            
+            # === UN AGENCIES ===
+            'UNICEF - East and Southern Africa': {
+                'url': 'https://www.unicef.org/esa/press-releases/rss.xml',
+                'type': 'UN',
+                'keywords': ['tanzania', 'east africa']
+            },
+            'WHO Africa': {
+                'url': 'https://www.afro.who.int/rss.xml',
+                'type': 'UN',
                 'keywords': ['tanzania', 'africa']
             },
-            'UN OCHA - East Africa': {
+            'UNDP Africa': {
+                'url': 'https://www.undp.org/africa/rss.xml',
+                'type': 'UN',
+                'keywords': ['tanzania', 'east africa', 'africa']
+            },
+            'UN OCHA East Africa': {
                 'url': 'https://www.unocha.org/rss/east-and-central-africa.xml',
                 'type': 'UN',
                 'keywords': ['tanzania', 'east africa']
             },
-            'World Bank - Tanzania': {
-                'url': 'https://www.worldbank.org/en/country/tanzania/rss',
-                'type': 'multilateral',
-                'keywords': ['tanzania']
+            
+            # === FOUNDATIONS ===
+            'Foundation Center - RFPs': {
+                'url': 'https://www.issuelab.org/resources.rss',
+                'type': 'foundation',
+                'keywords': ['africa', 'education', 'health']
             },
-            'UNICEF - Press Releases': {
-                'url': 'https://www.unicef.org/press-releases/rss.xml',
-                'type': 'UN',
+            'Global Fund Updates': {
+                'url': 'https://www.theglobalfund.org/en/rss/',
+                'type': 'foundation',
+                'keywords': ['tanzania', 'africa', 'health']
+            },
+            
+            # === EDUCATION SPECIFIC ===
+            'Global Partnership for Education': {
+                'url': 'https://www.globalpartnership.org/rss.xml',
+                'type': 'multilateral',
+                'keywords': ['tanzania', 'africa', 'education']
+            },
+            'Education Cannot Wait': {
+                'url': 'https://www.educationcannotwait.org/feed/',
+                'type': 'multilateral',
+                'keywords': ['africa', 'education', 'crisis']
+            },
+            
+            # === HEALTH SPECIFIC ===
+            'Gavi Alliance': {
+                'url': 'https://www.gavi.org/rss.xml',
+                'type': 'foundation',
+                'keywords': ['tanzania', 'africa', 'health', 'vaccine']
+            },
+            
+            # === REGIONAL ===
+            'African Development Bank': {
+                'url': 'https://www.afdb.org/en/rss/news-press-releases',
+                'type': 'multilateral',
                 'keywords': ['tanzania', 'east africa']
             },
-            'Grants.gov - Recent Postings': {
-                'url': 'https://www.grants.gov/rss/GG_NewOppByAgency.xml',
-                'type': 'US Federal',
-                'keywords': ['international', 'africa', 'global']
+            'East African Community': {
+                'url': 'https://www.eac.int/rss',
+                'type': 'regional',
+                'keywords': ['tanzania', 'east africa']
             },
-            'FundsForNGOs - Recent': {
-                'url': 'https://www2.fundsforngos.org/feed/',
-                'type': 'aggregator',
-                'keywords': ['tanzania', 'east africa', 'africa']
+            
+            # === PLATFORMS ===
+            'GlobalGiving - Tanzania': {
+                'url': 'https://www.globalgiving.org/aboutus/media/rss/',
+                'type': 'platform',
+                'keywords': ['tanzania', 'africa']
+            },
+            'Chuffed.org Updates': {
+                'url': 'https://blog.chuffed.org/feed/',
+                'type': 'platform',
+                'keywords': ['africa', 'social', 'impact']
             }
         }
     
@@ -107,9 +172,9 @@ class DonorRSSAggregator:
             
             count = 0
             for entry in feed.entries[:20]:  # Check last 20 items
-                # Skip if already seen
+                # Skip if already seen (unless show_all mode)
                 entry_url = entry.get('link', '')
-                if entry_url in self.seen_urls:
+                if not self.show_all and entry_url in self.seen_urls:
                     continue
                 
                 # Get entry details
@@ -145,7 +210,7 @@ class DonorRSSAggregator:
                         'sectors': self.classify_sectors(full_text),
                         'relevance_score': self.calculate_relevance(full_text),
                         'discovered': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                        'is_new': True
+                        'is_new': entry_url not in self.seen_urls
                     })
                     
                     self.seen_urls.add(entry_url)
@@ -234,6 +299,8 @@ class DonorRSSAggregator:
         print("="*70)
         print("📡 RSS DONOR FEED AGGREGATOR")
         print(f"🎯 Focus: {self.country.title()} + {', '.join(self.sectors).title()}")
+        if self.show_all:
+            print("📋 Mode: SHOW ALL (including previously seen)")
         print("="*70)
         
         feeds = self.get_donor_feeds()
@@ -247,7 +314,15 @@ class DonorRSSAggregator:
             time.sleep(1)  # Be respectful to servers
         
         print("\n" + "="*70)
-        print(f"✅ Scan complete! Found {total_found} NEW relevant opportunities")
+        
+        new_count = len([o for o in self.opportunities if o.get('is_new', True)])
+        
+        if self.show_all:
+            print(f"✅ Scan complete! Found {len(self.opportunities)} relevant opportunities")
+            print(f"   ({new_count} are new, {len(self.opportunities)-new_count} previously seen)")
+        else:
+            print(f"✅ Scan complete! Found {new_count} NEW relevant opportunities")
+        
         print("="*70)
         
         # Save seen URLs for next time
@@ -315,10 +390,19 @@ class DonorRSSAggregator:
 
 # RUN THE RSS AGGREGATOR
 if __name__ == "__main__":
+    import sys
+    
+    # Check for --all flag to show everything
+    show_all = '--all' in sys.argv
+    
     aggregator = DonorRSSAggregator(
         country="Tanzania",
-        sectors=["education", "health"]
+        sectors=["education", "health"],
+        show_all=show_all
     )
+    
+    if show_all:
+        print("\n🔍 Running in SHOW ALL mode - will display previously seen opportunities")
     
     print("\n🚀 Starting RSS feed scan...")
     print("⏱️  This will take 1-2 minutes...\n")
