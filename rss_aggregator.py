@@ -14,7 +14,7 @@ class DonorRSSAggregator:
     
     def __init__(self, country="Tanzania", sectors=None, show_all=False):
         self.country = country.lower()
-        self.sectors = [s.lower() for s in (sectors or ["education", "health"])]
+        self.sectors = [s.lower() for s in (sectors or ["education", "health", "agriculture", "food"])]
         self.opportunities = []
         self.show_all = show_all  # If True, show everything even if seen before
         self.seen_urls = self.load_seen_urls() if not show_all else set()
@@ -49,20 +49,23 @@ class DonorRSSAggregator:
                 'keywords': ['tanzania', 'east africa', 'africa', 'international']
             },
             'Devex - Funding News': {
-                'url': 'https://www.devex.com/news/funding/rss',
+                'url': 'https://www.devex.com/news/feed.rss',
                 'type': 'aggregator',
                 'keywords': ['tanzania', 'east africa', 'africa']
             },
+            'UNESCO': {'url': 'http://www.unevoc.unesco.org/unevoc_rss.xml', 'type': 'UN', 'keywords': ['education', 'africa']},
+
             'ReliefWeb - Tanzania Updates': {
-                'url': 'https://reliefweb.int/updates?advanced-search=%28PC236%29&format=rss',
+                'url': 'https://reliefweb.int/jobs/rss.xml',
                 'type': 'aggregator',
-                'keywords': ['tanzania']
+                'keywords': ['tanzania', 'education']
             },
             'ReliefWeb - Jobs East Africa': {
                 'url': 'https://reliefweb.int/jobs?search=east+africa&format=rss',
                 'type': 'aggregator',
                 'keywords': ['tanzania', 'east africa']
             },
+            'ReliefWeb - Funding/Grants': {'url': 'https://reliefweb.int/updates?query=grant+OR+funding&format=rss', 'type': 'aggregator', 'keywords': ['tanzania', 'education']},
             'Humentum (formerly LINGOs)': {
                 'url': 'https://www.humentum.org/feed',
                 'type': 'aggregator',
@@ -110,7 +113,7 @@ class DonorRSSAggregator:
                 'keywords': ['africa', 'education', 'health']
             },
             'Global Fund Updates': {
-                'url': 'https://www.theglobalfund.org/en/rss/',
+                'url': 'https://www.theglobalfund.org/data/rss-feeds/updates/',
                 'type': 'foundation',
                 'keywords': ['tanzania', 'africa', 'health']
             },
@@ -134,9 +137,36 @@ class DonorRSSAggregator:
                 'keywords': ['tanzania', 'africa', 'health', 'vaccine']
             },
             
+            # === AGRICULTURE & FOOD SECURITY ===
+            'CGIAR - Agricultural Research': {
+                'url': 'https://www.cgiar.org/news/feed/',
+                'type': 'multilateral',
+                'keywords': ['tanzania', 'africa', 'agriculture', 'food', 'farming']
+            },
+            'Food and Agriculture Organization (FAO)': {
+                'url': 'https://www.fao.org/news/rss/en/',
+                'type': 'UN',
+                'keywords': ['tanzania', 'africa', 'agriculture', 'food security', 'farming']
+            },
+            'International Fund for Agricultural Development (IFAD)': {
+                'url': 'https://www.ifad.org/en/rss',
+                'type': 'multilateral',
+                'keywords': ['tanzania', 'africa', 'agriculture', 'rural', 'farming']
+            },
+            'Alliance for a Green Revolution in Africa (AGRA)': {
+                'url': 'https://agra.org/feed/',
+                'type': 'foundation',
+                'keywords': ['tanzania', 'east africa', 'agriculture', 'farming', 'food']
+            },
+            'World Food Programme (WFP)': {
+                'url': 'https://www.wfp.org/news/rss.xml',
+                'type': 'UN',
+                'keywords': ['tanzania', 'africa', 'food', 'hunger', 'nutrition']
+            },
+            
             # === REGIONAL ===
             'African Development Bank': {
-                'url': 'https://www.afdb.org/en/rss/news-press-releases',
+                'url': 'https://www.afdb.org/en/news-and-events/adf/rss',
                 'type': 'multilateral',
                 'keywords': ['tanzania', 'east africa']
             },
@@ -152,11 +182,7 @@ class DonorRSSAggregator:
                 'type': 'platform',
                 'keywords': ['tanzania', 'africa']
             },
-            'Chuffed.org Updates': {
-                'url': 'https://blog.chuffed.org/feed/',
-                'type': 'platform',
-                'keywords': ['africa', 'social', 'impact']
-            }
+
         }
     
     def parse_feed(self, feed_name, feed_info):
@@ -281,11 +307,13 @@ class DonorRSSAggregator:
         sectors = []
         
         sector_keywords = {
-            'education': ['education', 'school', 'learning', 'training', 'literacy'],
-            'health': ['health', 'medical', 'hospital', 'clinic', 'healthcare', 'nutrition'],
-            'water': ['water', 'sanitation', 'wash'],
-            'agriculture': ['agriculture', 'farming', 'food'],
-            'governance': ['governance', 'democracy', 'rights', 'justice'],
+            'education': ['education', 'school', 'learning', 'training', 'literacy', 'student', 'teacher'],
+            'health': ['health', 'medical', 'hospital', 'clinic', 'healthcare', 'nutrition', 'disease'],
+            'water': ['water', 'sanitation', 'wash', 'hygiene'],
+            'agriculture': ['agriculture', 'farming', 'crop', 'livestock', 'agricu', 'farmer', 'harvest'],
+            'food_security': ['food security', 'hunger', 'malnutrition', 'food system', 'food aid'],
+            'governance': ['governance', 'democracy', 'rights', 'justice', 'policy'],
+            'climate': ['climate', 'environment', 'sustainability', 'renewable'],
         }
         
         for sector, keywords in sector_keywords.items():
@@ -397,7 +425,7 @@ if __name__ == "__main__":
     
     aggregator = DonorRSSAggregator(
         country="Tanzania",
-        sectors=["education", "health"],
+        sectors=["education", "health", "agriculture", "food"],
         show_all=show_all
     )
     

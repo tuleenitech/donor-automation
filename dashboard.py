@@ -7,7 +7,8 @@ import os
 import json
 from pathlib import Path
 
-from rss_aggregator import DonorRSSAggregator
+# Import your RSS aggregator
+# from rss_donor_aggregator import DonorRSSAggregator
 
 # Page config
 st.set_page_config(
@@ -63,6 +64,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize session state
+if 'opportunities' not in st.session_state:
+    st.session_state.opportunities = None
+if 'applications' not in st.session_state:
+    st.session_state.applications = load_applications()
+
 def load_applications():
     """Load application tracking data"""
     try:
@@ -80,12 +87,6 @@ def save_applications():
             json.dump(st.session_state.applications, f, indent=2)
     except Exception as e:
         st.error(f"Error saving applications: {e}")
-
-# Initialize session state
-if 'opportunities' not in st.session_state:
-    st.session_state.opportunities = None
-if 'applications' not in st.session_state:
-    st.session_state.applications = load_applications()
 
 def load_latest_opportunities():
     """Load the most recent CSV file"""
@@ -113,11 +114,11 @@ def run_scan():
     """Run a new RSS scan"""
     with st.spinner("🔍 Scanning RSS feeds... This may take 1-2 minutes..."):
         try:
-            from rss_aggregator import DonorRSSAggregator
+            from rss_donor_aggregator import DonorRSSAggregator
             
             aggregator = DonorRSSAggregator(
                 country="Tanzania",
-                sectors=["education", "health"]
+                sectors=["education", "health", "agriculture", "food"]
             )
             
             results = aggregator.scan_all_feeds()
@@ -207,7 +208,7 @@ with st.sidebar:
 
 # MAIN CONTENT
 st.markdown('<p class="main-header">🎯 Donor Opportunity Dashboard</p>', unsafe_allow_html=True)
-st.markdown(f"**Tanzania • Education & Health** | Last updated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}")
+st.markdown(f"**Tanzania • Education, Health, Agriculture & Food Security** | Last updated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}")
 
 # Check if we have data
 if st.session_state.opportunities is None:
@@ -407,41 +408,26 @@ with tab2:
             if isinstance(sectors, list):
                 all_sectors.extend(sectors)
         
-        sector_counts = (
-            pd.Series(all_sectors)
-            .value_counts()
-            .reset_index()
-        )
-
-        sector_counts.columns = ['Sector', 'Count']
-
+        sector_counts = pd.Series(all_sectors).value_counts()
+        
         fig2 = px.bar(
-            sector_counts,
-            x='Sector',
-            y='Count',
-            title='Opportunities by Sector'
+            x=sector_counts.index,
+            y=sector_counts.values,
+            title='Opportunities by Sector',
+            labels={'x': 'Sector', 'y': 'Count'}
         )
-
         st.plotly_chart(fig2, use_container_width=True)
         
         # Top sources
-        source_counts = (
-            df['source']
-            .value_counts()
-            .head(10)
-            .reset_index()
-        )
-
-        source_counts.columns = ['Source', 'Count']
-
+        source_counts = df['source'].value_counts().head(10)
+        
         fig4 = px.bar(
-            source_counts,
-            x='Count',
-            y='Source',
+            x=source_counts.values,
+            y=source_counts.index,
             orientation='h',
-            title='Top 10 Sources'
+            title='Top 10 Sources',
+            labels={'x': 'Number of Opportunities', 'y': 'Source'}
         )
-
         st.plotly_chart(fig4, use_container_width=True)
     
     # Timeline if we have dates

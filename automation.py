@@ -88,7 +88,7 @@ class DailyDonorAlert:
         try:
             aggregator = DonorRSSAggregator(
                 country="Tanzania",
-                sectors=["education", "health"]
+                sectors=["education", "health", "agriculture", "food"]
             )
 
             results = aggregator.scan_all_feeds()
@@ -209,7 +209,7 @@ class DailyDonorAlert:
         <body>
             <div class="header">
                 <h1>🎯 Daily Donor Opportunities</h1>
-                <p>Tanzania • Education & Health • {datetime.now().strftime('%B %d, %Y')}</p>
+                <p>Tanzania • Education, Health, Agriculture & Food Security • {datetime.now().strftime('%B %d, %Y')}</p>
             </div>
 
             <div class="summary">
