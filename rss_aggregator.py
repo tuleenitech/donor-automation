@@ -187,13 +187,13 @@ class DonorRSSAggregator:
     
     def parse_feed(self, feed_name, feed_info):
         """Parse a single RSS feed"""
-        print(f"  📡 Checking: {feed_name}...")
+        print(f"   Checking: {feed_name}...")
         
         try:
             feed = feedparser.parse(feed_info['url'])
             
             if feed.bozo:  # Feed parsing error
-                print(f"    ⚠️ Feed error: {feed_name}")
+                print(f"    Feed error: {feed_name}")
                 return 0
             
             count = 0
@@ -242,11 +242,11 @@ class DonorRSSAggregator:
                     self.seen_urls.add(entry_url)
                     count += 1
             
-            print(f"    ✅ Found {count} relevant opportunities")
+            print(f"    Found {count} relevant opportunities")
             return count
             
         except Exception as e:
-            print(f"    ⚠️ Error parsing {feed_name}: {str(e)[:60]}")
+            print(f"     Error parsing {feed_name}: {str(e)[:60]}")
             return 0
     
     def calculate_relevance(self, text):
@@ -325,15 +325,15 @@ class DonorRSSAggregator:
     def scan_all_feeds(self):
         """Scan all RSS feeds"""
         print("="*70)
-        print("📡 RSS DONOR FEED AGGREGATOR")
-        print(f"🎯 Focus: {self.country.title()} + {', '.join(self.sectors).title()}")
+        print(" RSS DONOR FEED AGGREGATOR")
+        print(f" Focus: {self.country.title()} + {', '.join(self.sectors).title()}")
         if self.show_all:
-            print("📋 Mode: SHOW ALL (including previously seen)")
+            print(" Mode: SHOW ALL (including previously seen)")
         print("="*70)
         
         feeds = self.get_donor_feeds()
         
-        print(f"\n📊 Scanning {len(feeds)} RSS feeds...\n")
+        print(f"\n Scanning {len(feeds)} RSS feeds...\n")
         
         total_found = 0
         for feed_name, feed_info in feeds.items():
@@ -346,10 +346,10 @@ class DonorRSSAggregator:
         new_count = len([o for o in self.opportunities if o.get('is_new', True)])
         
         if self.show_all:
-            print(f"✅ Scan complete! Found {len(self.opportunities)} relevant opportunities")
+            print(f" Scan complete! Found {len(self.opportunities)} relevant opportunities")
             print(f"   ({new_count} are new, {len(self.opportunities)-new_count} previously seen)")
         else:
-            print(f"✅ Scan complete! Found {new_count} NEW relevant opportunities")
+            print(f" Scan complete! Found {new_count} NEW relevant opportunities")
         
         print("="*70)
         
@@ -357,7 +357,7 @@ class DonorRSSAggregator:
         self.save_seen_urls()
         
         if len(self.opportunities) == 0:
-            print("\n💡 No new opportunities found this time.")
+            print("\n No new opportunities found this time.")
             print("   This is normal - RSS feeds update periodically.")
             print("   Run this daily to catch new opportunities as they appear!")
             return pd.DataFrame()
@@ -374,17 +374,17 @@ class DonorRSSAggregator:
         if len(df) == 0:
             return
         
-        print("\n📊 OPPORTUNITY SUMMARY:")
+        print("\n OPPORTUNITY SUMMARY:")
         print("-" * 70)
         
-        print(f"\n✅ Total new opportunities: {len(df)}")
-        print(f"🔥 High relevance (8-10): {len(df[df['relevance_score'] >= 8])}")
-        print(f"⚡ Medium relevance (5-7): {len(df[(df['relevance_score'] >= 5) & (df['relevance_score'] < 8)])}")
+        print(f"\n Total new opportunities: {len(df)}")
+        print(f" High relevance (8-10): {len(df[df['relevance_score'] >= 8])}")
+        print(f" Medium relevance (5-7): {len(df[(df['relevance_score'] >= 5) & (df['relevance_score'] < 8)])}")
         
-        print("\n📌 By Source Type:")
+        print("\n By Source Type:")
         print(df['source_type'].value_counts().to_string())
         
-        print("\n🎯 By Sector:")
+        print("\n By Sector:")
         all_sectors = []
         for sectors in df['sectors']:
             if isinstance(sectors, list):
@@ -392,7 +392,7 @@ class DonorRSSAggregator:
         if all_sectors:
             print(pd.Series(all_sectors).value_counts().head(5).to_string())
         
-        print("\n🏆 TOP 5 MOST RELEVANT OPPORTUNITIES:")
+        print("\n TOP 5 MOST RELEVANT OPPORTUNITIES:")
         print("-" * 70)
         
         for i, (_, row) in enumerate(df.head(5).iterrows(), 1):
@@ -401,15 +401,15 @@ class DonorRSSAggregator:
             print(f"   Relevance: {row['relevance_score']}/10")
             print(f"   Sectors: {', '.join(row['sectors']) if isinstance(row['sectors'], list) else row['sectors']}")
             if row['deadline']:
-                print(f"   ⏰ Deadline: {row['deadline']}")
+                print(f"    Deadline: {row['deadline']}")
             if row['amount']:
-                print(f"   💰 Amount: {row['amount']}")
+                print(f"    Amount: {row['amount']}")
             print(f"   🔗 {row['url']}")
         
         # Show deadlines
         with_deadlines = df[df['deadline'].notna()]
         if len(with_deadlines) > 0:
-            print(f"\n\n🚨 URGENT - {len(with_deadlines)} opportunities with deadlines:")
+            print(f"\n\n URGENT - {len(with_deadlines)} opportunities with deadlines:")
             print("-" * 70)
             for _, row in with_deadlines.iterrows():
                 print(f"• {row['title'][:60]}")
@@ -430,10 +430,10 @@ if __name__ == "__main__":
     )
     
     if show_all:
-        print("\n🔍 Running in SHOW ALL mode - will display previously seen opportunities")
+        print("\n Running in SHOW ALL mode - will display previously seen opportunities")
     
-    print("\n🚀 Starting RSS feed scan...")
-    print("⏱️  This will take 1-2 minutes...\n")
+    print("\n Starting RSS feed scan...")
+    print("⏱  This will take 1-2 minutes...\n")
     
     results = aggregator.scan_all_feeds()
     
@@ -444,34 +444,23 @@ if __name__ == "__main__":
         timestamp = datetime.now().strftime('%Y%m%d_%H%M')
         filename = f"rss_opportunities_{timestamp}.csv"
         results.to_csv(filename, index=False)
-        print(f"\n💾 Full results saved to: {filename}")
+        print(f"\n Full results saved to: {filename}")
         
         # Save high-priority ones
         priority = results[results['relevance_score'] >= 7]
         if len(priority) > 0:
             priority_file = f"PRIORITY_opportunities_{timestamp}.csv"
             priority.to_csv(priority_file, index=False)
-            print(f"⭐ High-priority opportunities: {priority_file}")
+            print(f" High-priority opportunities: {priority_file}")
         
         # Save urgent ones
         urgent = results[results['deadline'].notna()]
         if len(urgent) > 0:
             urgent_file = f"URGENT_deadlines_{timestamp}.csv"
             urgent.to_csv(urgent_file, index=False)
-            print(f"🚨 Urgent opportunities: {urgent_file}")
+            print(f" Urgent opportunities: {urgent_file}")
     
     print("\n" + "="*70)
-    print("✅ RSS SCAN COMPLETE")
+    print(" RSS SCAN COMPLETE")
     print("="*70)
     
-    print("\n💡 NEXT STEPS:")
-    print("1. Review the generated CSV files")
-    print("2. Set this to run daily (see automation guide below)")
-    print("3. Add more RSS feeds as you discover them")
-    
-    print("\n📅 TO AUTOMATE (Run Daily):")
-    print("   Linux/Mac: Add to crontab")
-    print("   crontab -e")
-    print("   0 9 * * * cd /path/to/project && python rss_aggregator.py")
-    print("\n   Windows: Use Task Scheduler")
-    print("   Or deploy to a free server (Heroku, Railway, etc.)")

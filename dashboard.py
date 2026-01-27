@@ -7,9 +7,6 @@ import os
 import json
 from pathlib import Path
 
-# Import your RSS aggregator
-# from rss_donor_aggregator import DonorRSSAggregator
-
 # Page config
 st.set_page_config(
     page_title="Donor Opportunity Tracker",
@@ -64,12 +61,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
-if 'opportunities' not in st.session_state:
-    st.session_state.opportunities = None
-if 'applications' not in st.session_state:
-    st.session_state.applications = load_applications()
-
+# DEFINE FUNCTIONS FIRST (before using them)
 def load_applications():
     """Load application tracking data"""
     try:
@@ -114,7 +106,7 @@ def run_scan():
     """Run a new RSS scan"""
     with st.spinner("🔍 Scanning RSS feeds... This may take 1-2 minutes..."):
         try:
-            from rss_donor_aggregator import DonorRSSAggregator
+            from rss_aggregator import DonorRSSAggregator
             
             aggregator = DonorRSSAggregator(
                 country="Tanzania",
@@ -140,6 +132,12 @@ def run_scan():
         except Exception as e:
             st.error(f"Error running scan: {e}")
             return None
+
+# Initialize session state (NOW the functions are defined)
+if 'opportunities' not in st.session_state:
+    st.session_state.opportunities = None
+if 'applications' not in st.session_state:
+    st.session_state.applications = load_applications()
 
 # SIDEBAR
 with st.sidebar:
