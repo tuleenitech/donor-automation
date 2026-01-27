@@ -1,33 +1,122 @@
+# .github/workflows/daily-donor-scan.yml
+# GitHub Actions workflow to scan donor opportunities daily
+
 name: Daily Donor Opportunity Scan
 
 on:
+  # Run daily at 9 AM UTC (adjust timezone as needed)
   schedule:
-    # Runs every day at 06:00 UTC (09:00 Tanzania time)
-    - cron: "0 6 * * *"
-  workflow_dispatch: # Allows manual runs
+    - cron: '0 9 * * *'  # Daily at 9 AM UTC
+  
+  # Allow manual triggering from GitHub UI
+  workflow_dispatch:
+  
+  # Trigger on push to main (for testing)
+  push:
+    branches:
+      - main
+    paths:
+      - 'rss_aggregator.py'
+      - 'automation.py'
+      - '.github/workflows/daily-donor-scan.yml'
 
 jobs:
-  run-scan:
+  scan-and-notify:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
+      # Step 1: Checkout the repository
+      - name:  Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      
+      # Step 2: Set up Python
+      - name:  Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-
-      - name: Install dependencies
+          python-version: '3.11'
+          cache: 'pip'
+      
+      # Step 3: Install dependencies
+      - name:  Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Run donor automation
+      
+      # Step 4: Run RSS scan
+      - name:  Scan RSS Feeds
+        run: |
+          python rss_aggregator.py
+        continue-on-error: true  # Don't fail if no new opportunities
+      
+      # Step 5: Send email notification
+      - name:  Send Email Alert
         env:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: |
           python automation.py
+        continue-on-error: true
+      
+      # Step 6: Upload results as artifacts (for debugging)
+      - name:  Upload Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: donor-opportunities
+          path: |
+            *.csv
+            *.log
+          retention-days: 30
+      
+      # Step 7: Commit updated seen URLs (if changed)
+      - name:  Save Seen URLs
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions Bot"
+          
+          # Add seen_opportunities.json if it changed
+          if [[ -f seen_opportunities.json ]]; then
+            git add seen_opportunities.json
+            git diff --staged --quiet || git commit -m "Update seen opportunities [skip ci]"
+            git push || echo "No changes to push"
+          fi
+        continue-on-error: true
+
+  # Optional: Email parsing job (runs separately)
+  email-parse:
+    runs-on: ubuntu-latest
+    # Only run if you've set up Gmail API secrets
+    if: ${{ secrets.GMAIL_CREDENTIALS != '' }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: 🔐 Setup Gmail Credentials
+        run: |
+          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials.json
+          echo '${{ secrets.GMAIL_TOKEN }}' > token.json
+      
+      - name: 📧 Parse Email Newsletters
+        run: |
+          python email_parser.py
+        continue-on-error: true
+      
+      - name: 📊 Upload Email Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: email-opportunities
+          path: email_opportunities_*.csv
+          retention-days: 30
