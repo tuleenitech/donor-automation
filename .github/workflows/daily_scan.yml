@@ -83,8 +83,6 @@ jobs:
           fi
         continue-on-error: true
 
-  # Optional: Email parsing job (runs separately)
-  email-parse:
     runs-on: ubuntu-latest
     # Only run if you've set up Gmail API secrets
     if: ${{ secrets.GMAIL_CREDENTIALS != '' }}
