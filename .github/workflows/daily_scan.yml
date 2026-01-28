@@ -82,39 +82,3 @@ jobs:
             git push || echo "No changes to push"
           fi
         continue-on-error: true
-
-    runs-on: ubuntu-latest
-    # Only run if you've set up Gmail API secrets
-    if: ${{ secrets.GMAIL_CREDENTIALS != '' }}
-    
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-      
-      - name: 🐍 Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-      
-      - name: 📦 Install Dependencies
-        run: |
-          pip install -r requirements.txt
-      
-      - name: 🔐 Setup Gmail Credentials
-        run: |
-          echo '${{ secrets.GMAIL_CREDENTIALS }}' > credentials.json
-          echo '${{ secrets.GMAIL_TOKEN }}' > token.json
-      
-      - name: 📧 Parse Email Newsletters
-        run: |
-          python email_parser.py
-        continue-on-error: true
-      
-      - name: 📊 Upload Email Results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: email-opportunities
-          path: email_opportunities_*.csv
-          retention-days: 30
