@@ -71,10 +71,10 @@ class DailyDonorAlert:
             missing.append("EMAIL_TO")
 
         if missing:
-            logger.error("❌ Missing required environment variables:")
+            logger.error(" Missing required environment variables:")
             for var in missing:
                 logger.error(f"   - {var}")
-            logger.error("\n👉 Fix your .env file and retry")
+            logger.error("\n Fix your .env file and retry")
             sys.exit(1)
 
     # -------------------------------------------------
@@ -82,7 +82,7 @@ class DailyDonorAlert:
     # -------------------------------------------------
     def run_daily_scan(self) -> pd.DataFrame:
         """Execute RSS feed scan"""
-        logger.info(f"\n🗓️  DAILY SCAN — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        logger.info(f"\n  DAILY SCAN — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         logger.info("=" * 70)
 
         try:
@@ -96,11 +96,11 @@ class DailyDonorAlert:
             if not isinstance(results, pd.DataFrame):
                 raise ValueError("Aggregator must return a pandas DataFrame")
 
-            logger.info(f"🔍 Found {len(results)} opportunities")
+            logger.info(f" Found {len(results)} opportunities")
             return results
 
         except Exception as e:
-            logger.error(f"❌ Scan failed: {e}")
+            logger.error(f" Scan failed: {e}")
             # Return empty DataFrame on error
             return pd.DataFrame()
 
@@ -110,14 +110,14 @@ class DailyDonorAlert:
     def send_email_alert(self, df: pd.DataFrame) -> None:
         """Send email with opportunities"""
         if df.empty:
-            logger.info("📭 No new opportunities — email skipped")
+            logger.info(" No new opportunities — email skipped")
             return
 
         msg = MIMEMultipart("alternative")
         msg["From"] = self.email_from
         msg["To"] = self.email_to
         msg["Subject"] = (
-            f"🎯 {len(df)} New Donor Opportunities — "
+            f" {len(df)} New Donor Opportunities — "
             f"{datetime.now().strftime('%b %d, %Y')}"
         )
 
@@ -127,29 +127,29 @@ class DailyDonorAlert:
         csv_path = self._attach_csv(df, msg)
 
         try:
-            logger.info(f"📧 Sending email to {self.email_to}...")
+            logger.info(f" Sending email to {self.email_to}...")
 
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.email_from, self.email_password)
                 server.send_message(msg)
 
-            logger.info("✅ Email sent successfully!")
+            logger.info(" Email sent successfully!")
 
         except smtplib.SMTPAuthenticationError:
-            logger.error("❌ Authentication failed - check your App Password")
-            logger.error("💡 Visit: https://myaccount.google.com/apppasswords")
+            logger.error(" Authentication failed - check your App Password")
+            logger.error(" Visit: https://myaccount.google.com/apppasswords")
 
         except smtplib.SMTPException as e:
-            logger.error(f"❌ SMTP error: {e}")
+            logger.error(f" SMTP error: {e}")
 
         except Exception as e:
-            logger.error(f"❌ Unexpected email error: {e}")
+            logger.error(f" Unexpected email error: {e}")
 
         finally:
             if csv_path and os.path.exists(csv_path):
                 os.remove(csv_path)
-                logger.debug(f"🗑️ Cleaned up temporary file: {csv_path}")
+                logger.debug(f" Cleaned up temporary file: {csv_path}")
 
     def _attach_csv(self, df: pd.DataFrame, msg: MIMEMultipart) -> str:
         """Attach CSV file to email"""
@@ -172,7 +172,7 @@ class DailyDonorAlert:
             return filename
 
         except Exception as e:
-            logger.error(f"⚠️ Failed to attach CSV: {e}")
+            logger.error(f" Failed to attach CSV: {e}")
             return None
 
     # -------------------------------------------------
@@ -208,12 +208,12 @@ class DailyDonorAlert:
         </head>
         <body>
             <div class="header">
-                <h1>🎯 Daily Donor Opportunities</h1>
+                <h1> Daily Donor Opportunities</h1>
                 <p>Tanzania • Education, Health, Agriculture & Food Security • {datetime.now().strftime('%B %d, %Y')}</p>
             </div>
 
             <div class="summary">
-                <h2>📊 Summary</h2>
+                <h2> Summary</h2>
                 <ul>
                     <li><strong>Total Opportunities:</strong> {len(df)}</li>
                     <li><strong>High Priority (8-10):</strong> {len(high_priority)}</li>
@@ -225,7 +225,7 @@ class DailyDonorAlert:
         if not urgent.empty:
             html += """
             <div style="background: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h2>🚨 URGENT - Upcoming Deadlines</h2>
+                <h2> URGENT - Upcoming Deadlines</h2>
             """
             
             for _, row in urgent.head(5).iterrows():
@@ -233,7 +233,7 @@ class DailyDonorAlert:
                 html += f"""
                 <div class="opportunity urgent">
                     <h3>{safe(row['title'])}</h3>
-                    <p><strong>⏰ Deadline:</strong> {safe(row['deadline'])}</p>
+                    <p><strong> Deadline:</strong> {safe(row['deadline'])}</p>
                     <p><strong>Source:</strong> {safe(row['source'])}</p>
                     <p><strong>Sectors:</strong> {sectors}</p>
                     {f"<p><strong>Amount:</strong> {safe(row['amount'])}</p>" if pd.notna(row.get('amount')) else ""}
@@ -244,7 +244,7 @@ class DailyDonorAlert:
             html += "</div>"
 
         if not high_priority.empty:
-            html += "<h2>⭐ High Priority Opportunities</h2>"
+            html += "<h2> High Priority Opportunities</h2>"
             
             for _, row in high_priority.head(10).iterrows():
                 sectors = ', '.join(row['sectors']) if isinstance(row['sectors'], list) else safe(row['sectors'])
@@ -265,7 +265,7 @@ class DailyDonorAlert:
         if not other.empty:
             html += f"""
             <div style="background: #f9fafb; padding: 15px; margin: 20px 0;">
-                <p><strong>📋 Other Opportunities:</strong> {len(other)}</p>
+                <p><strong> Other Opportunities:</strong> {len(other)}</p>
                 <p><em>See attached CSV for complete list</em></p>
             </div>
             """
@@ -287,7 +287,7 @@ class DailyDonorAlert:
     def run(self) -> None:
         """Execute the full automation workflow"""
         try:
-            logger.info("\n🤖 AUTOMATED DAILY DONOR SCAN")
+            logger.info("\n AUTOMATED DAILY DONOR SCAN")
             logger.info("=" * 70)
             
             results = self.run_daily_scan()
@@ -295,75 +295,27 @@ class DailyDonorAlert:
             if not results.empty:
                 self.send_email_alert(results)
             else:
-                logger.info("📭 No opportunities found - no email sent")
+                logger.info(" No opportunities found - no email sent")
             
-            logger.info("\n✅ Daily scan completed successfully")
+            logger.info("\n Daily scan completed successfully")
             logger.info("=" * 70)
 
         except Exception as e:
-            logger.error(f"\n❌ Automation failed: {e}", exc_info=True)
+            logger.error(f"\n Automation failed: {e}", exc_info=True)
             sys.exit(1)
-
-
-# -------------------------------------------------
-# SETUP HELPER
-# -------------------------------------------------
-def print_setup_instructions():
-    """Display setup guide"""
-    print("""
-╔══════════════════════════════════════════════════════════════════════╗
-║                   AUTOMATION SETUP GUIDE                              ║
-╚══════════════════════════════════════════════════════════════════════╝
-
-📧 EMAIL SETUP (Gmail):
-1. Enable 2-Step Verification in your Google Account
-2. Generate an App Password:
-   • Visit: https://myaccount.google.com/apppasswords
-   • Select 'Mail' and your device
-   • Copy the 16-character password
-
-3. Create a .env file in your project folder:
-   
-   EMAIL_FROM=your_email@gmail.com
-   EMAIL_PASSWORD=your_16_char_app_password
-   EMAIL_TO=recipient@email.com
-
-📅 DAILY AUTOMATION OPTIONS:
-
-OPTION 1 - Linux/Mac (Cron):
-  crontab -e
-  # Add: 0 9 * * * cd /path/to/project && python automation.py
-
-OPTION 2 - Windows (Task Scheduler):
-  1. Open Task Scheduler
-  2. Create Basic Task → Daily at 9:00 AM
-  3. Action: python C:\\path\\to\\automation.py
-
-OPTION 3 - Cloud (Free):
-  • Railway.app - Add cron schedule
-  • Heroku - Use Heroku Scheduler add-on
-  • GitHub Actions - Workflow on schedule
-
-🧪 TEST FIRST:
-  python automation.py
-
-✅ DONE! Check your email for results.
-    """)
-
 
 # -------------------------------------------------
 # CLI ENTRYPOINT
 # -------------------------------------------------
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "setup":
-        print_setup_instructions()
         sys.exit(0)
 
     EMAIL_TO = os.getenv("EMAIL_TO")
 
     if not EMAIL_TO:
-        logger.error("⚠️ EMAIL_TO not configured in .env file")
-        logger.error("👉 Run: python automation.py setup")
+        logger.error(" EMAIL_TO not configured in .env file")
+        logger.error(" Run: python automation.py setup")
         sys.exit(1)
 
     scanner = DailyDonorAlert(email_to=EMAIL_TO)
