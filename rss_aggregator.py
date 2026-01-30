@@ -55,16 +55,16 @@ class DonorRSSAggregator:
             },
             'UNESCO': {'url': 'http://www.unevoc.unesco.org/unevoc_rss.xml', 'type': 'UN', 'keywords': ['education', 'africa']},
 
-            'ReliefWeb - Tanzania Updates': {
-                'url': 'https://reliefweb.int/jobs/rss.xml',
-                'type': 'aggregator',
-                'keywords': ['tanzania', 'education']
-            },
-            'ReliefWeb - Jobs East Africa': {
-                'url': 'https://reliefweb.int/jobs?search=east+africa&format=rss',
-                'type': 'aggregator',
-                'keywords': ['tanzania', 'east africa']
-            },
+            # 'ReliefWeb - Tanzania Updates': {
+            #     'url': 'https://reliefweb.int/jobs/rss.xml',
+            #     'type': 'aggregator',
+            #     'keywords': ['tanzania', 'education']
+            # },
+            # 'ReliefWeb - Jobs East Africa': {
+            #     'url': 'https://reliefweb.int/jobs?search=east+africa&format=rss',
+            #     'type': 'aggregator',
+            #     'keywords': ['tanzania', 'east africa']
+            # },
             'ReliefWeb - Funding/Grants': {'url': 'https://reliefweb.int/updates?query=grant+OR+funding&format=rss', 'type': 'aggregator', 'keywords': ['tanzania', 'education']},
             'Humentum (formerly LINGOs)': {
                 'url': 'https://www.humentum.org/feed',
